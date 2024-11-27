@@ -1,0 +1,78 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isValidClient() {
+      let validTypes = ['homme', 'femme', 'enfant'];
+      return request.resource.data.name is string &&
+             request.resource.data.name.size() > 0 &&
+             request.resource.data.type in validTypes;
+    }
+
+    function isValidService() {
+      let validTypes = ['coupe', 'brushing', 'meches', 'coloration', 'supplements', 'coulage', 'soin', 'chignon'];
+      return request.resource.data.clientId is string &&
+             request.resource.data.price is number &&
+             request.resource.data.price >= 0 &&
+             request.resource.data.date is string &&
+             (request.resource.data.duration == null || 
+              (request.resource.data.duration is number && request.resource.data.duration > 0)) &&
+             request.resource.data.types is list &&
+             request.resource.data.types.size() > 0 &&
+             request.resource.data.types.hasAll(validTypes);
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && isOwner(userId);
+      allow delete: if false;
+    }
+
+    // Clients collection
+    match /clients/{clientId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+                      request.resource.data.userId == request.auth.uid &&
+                      isValidClient();
+      allow update: if isAuthenticated() && 
+                      resource.data.userId == request.auth.uid &&
+                      request.resource.data.userId == request.auth.uid &&
+                      isValidClient();
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Services collection
+    match /services/{serviceId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+                      request.resource.data.userId == request.auth.uid &&
+                      isValidService();
+      allow update: if isAuthenticated() && 
+                      resource.data.userId == request.auth.uid &&
+                      request.resource.data.userId == request.auth.uid &&
+                      isValidService();
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Settings collection
+    match /settings/{settingId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && 
+                      resource.data.userId == request.auth.uid &&
+                      request.resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+  }
+}
