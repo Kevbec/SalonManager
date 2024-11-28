@@ -36,6 +36,21 @@ const initialState: AppState = {
   error: null
 };
 
+function updateClientLastVisit(client: Client, services: Service[]): Client {
+  const clientServices = services
+    .filter(service => service.clientId === client.id)
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  return {
+    ...client,
+    lastVisit: clientServices[0]?.date || ''
+  };
+}
+
+function updateAllClientsLastVisit(clients: Client[], services: Service[]): Client[] {
+  return clients.map(client => updateClientLastVisit(client, services));
+}
+
 function appReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_LOADING':
@@ -45,24 +60,36 @@ function appReducer(state: AppState, action: Action): AppState {
       return { ...state, error: action.payload };
     
     case 'SET_CLIENTS':
-      return { ...state, clients: action.payload };
+      return { 
+        ...state, 
+        clients: updateAllClientsLastVisit(action.payload, state.services)
+      };
     
     case 'SET_SERVICES':
-      return { ...state, services: action.payload };
+      return { 
+        ...state,
+        services: action.payload,
+        clients: updateAllClientsLastVisit(state.clients, action.payload)
+      };
     
     case 'SET_SETTINGS':
       return { ...state, settings: action.payload };
 
     case 'ADD_CLIENT':
-      return { ...state, clients: [...state.clients, action.payload] };
+      return { 
+        ...state,
+        clients: updateAllClientsLastVisit([...state.clients, action.payload], state.services)
+      };
 
-    case 'UPDATE_CLIENT':
+    case 'UPDATE_CLIENT': {
+      const updatedClients = state.clients.map(client =>
+        client.id === action.payload.id ? action.payload : client
+      );
       return {
         ...state,
-        clients: state.clients.map(client =>
-          client.id === action.payload.id ? action.payload : client
-        )
+        clients: updateAllClientsLastVisit(updatedClients, state.services)
       };
+    }
 
     case 'DELETE_CLIENT':
       return {
@@ -72,24 +99,10 @@ function appReducer(state: AppState, action: Action): AppState {
 
     case 'ADD_SERVICE': {
       const newServices = [...state.services, action.payload];
-      const updatedClients = state.clients.map(client => {
-        if (client.id === action.payload.clientId) {
-          const clientServices = newServices
-            .filter(service => service.clientId === client.id)
-            .sort((a, b) => b.date.localeCompare(a.date));
-          
-          return {
-            ...client,
-            lastVisit: clientServices[0]?.date || client.lastVisit
-          };
-        }
-        return client;
-      });
-
       return {
         ...state,
         services: newServices,
-        clients: updatedClients
+        clients: updateAllClientsLastVisit(state.clients, newServices)
       };
     }
 
@@ -97,22 +110,10 @@ function appReducer(state: AppState, action: Action): AppState {
       const updatedServices = state.services.map(service =>
         service.id === action.payload.id ? action.payload : service
       );
-
-      const updatedClients = state.clients.map(client => {
-        const clientServices = updatedServices
-          .filter(service => service.clientId === client.id)
-          .sort((a, b) => b.date.localeCompare(a.date));
-        
-        return {
-          ...client,
-          lastVisit: clientServices[0]?.date || client.lastVisit
-        };
-      });
-
       return {
         ...state,
         services: updatedServices,
-        clients: updatedClients
+        clients: updateAllClientsLastVisit(state.clients, updatedServices)
       };
     }
 
@@ -120,22 +121,10 @@ function appReducer(state: AppState, action: Action): AppState {
       const remainingServices = state.services.filter(service => 
         service.id !== action.payload
       );
-
-      const updatedClients = state.clients.map(client => {
-        const clientServices = remainingServices
-          .filter(service => service.clientId === client.id)
-          .sort((a, b) => b.date.localeCompare(a.date));
-        
-        return {
-          ...client,
-          lastVisit: clientServices[0]?.date || client.lastVisit
-        };
-      });
-
       return {
         ...state,
         services: remainingServices,
-        clients: updatedClients
+        clients: updateAllClientsLastVisit(state.clients, remainingServices)
       };
     }
 
@@ -205,19 +194,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           });
         }
 
-        // Fetch clients
-        const clientsQuery = query(
-          collection(db, 'clients'),
-          where('userId', '==', user.id)
-        );
-        const clientsSnapshot = await getDocs(clientsQuery);
-        const clientsData = clientsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Client[];
-        dispatch({ type: 'SET_CLIENTS', payload: clientsData });
-
-        // Fetch services
+        // Fetch services first to ensure proper last visit dates
         const servicesQuery = query(
           collection(db, 'services'),
           where('userId', '==', user.id)
@@ -228,6 +205,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ...doc.data()
         })) as Service[];
         dispatch({ type: 'SET_SERVICES', payload: servicesData });
+
+        // Then fetch clients
+        const clientsQuery = query(
+          collection(db, 'clients'),
+          where('userId', '==', user.id)
+        );
+        const clientsSnapshot = await getDocs(clientsQuery);
+        const clientsData = clientsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Client[];
+        dispatch({ type: 'SET_CLIENTS', payload: clientsData });
 
       } catch (error: any) {
         dispatch({ 
