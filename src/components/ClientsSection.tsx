@@ -163,55 +163,63 @@ export function ClientsSection({ onClientSelect }: ClientsSectionProps) {
             </button>
           </div>
         </div>
+
+        {/* Fixed Table Header */}
+        <div className="px-8">
+          <div className="bg-white rounded-t-lg shadow">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="w-10 px-6 py-3"></th>
+                  <th className="px-6 py-3 text-left">
+                    <button
+                      className="flex items-center text-xs font-medium text-gray-500 uppercase hover:text-gray-700"
+                      onClick={() => handleSort('name')}
+                    >
+                      Nom
+                      {sortField === 'name' && (
+                        sortDirection === 'asc' ? <ArrowUp className="w-4 h-4 ml-1" /> : <ArrowDown className="w-4 h-4 ml-1" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-6 py-3 text-left">
+                    <button
+                      className="flex items-center text-xs font-medium text-gray-500 uppercase hover:text-gray-700"
+                      onClick={() => handleSort('type')}
+                    >
+                      Type
+                      {sortField === 'type' && (
+                        sortDirection === 'asc' ? <ArrowUp className="w-4 h-4 ml-1" /> : <ArrowDown className="w-4 h-4 ml-1" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-6 py-3 text-left">
+                    <button
+                      className="flex items-center text-xs font-medium text-gray-500 uppercase hover:text-gray-700"
+                      onClick={() => handleSort('lastVisit')}
+                    >
+                      Dernière Visite
+                      {sortField === 'lastVisit' && (
+                        sortDirection === 'asc' ? <ArrowUp className="w-4 h-4 ml-1" /> : <ArrowDown className="w-4 h-4 ml-1" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+        </div>
       </div>
 
       {/* Table Content with top padding to account for fixed header */}
-      <div className="pt-48">
+      <div className="pt-[232px]">
         <div className="px-8">
-          <div className="bg-white rounded-lg shadow">
+          <div className="bg-white rounded-b-lg shadow">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="w-10 px-6 py-3"></th>
-                    <th className="px-6 py-3 text-left">
-                      <button
-                        className="flex items-center text-xs font-medium text-gray-500 uppercase hover:text-gray-700"
-                        onClick={() => handleSort('name')}
-                      >
-                        Nom
-                        {sortField === 'name' && (
-                          sortDirection === 'asc' ? <ArrowUp className="w-4 h-4 ml-1" /> : <ArrowDown className="w-4 h-4 ml-1" />
-                        )}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-left">
-                      <button
-                        className="flex items-center text-xs font-medium text-gray-500 uppercase hover:text-gray-700"
-                        onClick={() => handleSort('type')}
-                      >
-                        Type
-                        {sortField === 'type' && (
-                          sortDirection === 'asc' ? <ArrowUp className="w-4 h-4 ml-1" /> : <ArrowDown className="w-4 h-4 ml-1" />
-                        )}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-left">
-                      <button
-                        className="flex items-center text-xs font-medium text-gray-500 uppercase hover:text-gray-700"
-                        onClick={() => handleSort('lastVisit')}
-                      >
-                        Dernière Visite
-                        {sortField === 'lastVisit' && (
-                          sortDirection === 'asc' ? <ArrowUp className="w-4 h-4 ml-1" /> : <ArrowDown className="w-4 h-4 ml-1" />
-                        )}
-                      </button>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {sortedAndFilteredClients.map((client) => (
                     <tr key={client.id} className="hover:bg-gray-50">
