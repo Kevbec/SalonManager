@@ -35,20 +35,6 @@ export function ClientsSection({ onClientSelect }: ClientsSectionProps) {
     { value: 'enfant', label: 'Enfant' }
   ];
 
-  // Calculer les dates de dernière visite pour chaque client
-  const clientsWithLastVisit = useMemo(() => {
-    return state.clients.map(client => {
-      const clientServices = state.services
-        .filter(service => service.clientId === client.id)
-        .sort((a, b) => b.date.localeCompare(a.date));
-
-      return {
-        ...client,
-        lastVisit: clientServices.length > 0 ? clientServices[0].date : null
-      };
-    });
-  }, [state.clients, state.services]);
-
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -84,7 +70,7 @@ export function ClientsSection({ onClientSelect }: ClientsSectionProps) {
   };
 
   const sortedAndFilteredClients = useMemo(() => {
-    let filtered = clientsWithLastVisit.filter(client => {
+    let filtered = state.clients.filter(client => {
       const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = filterType === 'all' || client.type === filterType;
       const matchesFavorite = !showFavoritesOnly || client.isFavorite;
@@ -109,7 +95,7 @@ export function ClientsSection({ onClientSelect }: ClientsSectionProps) {
       }
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-  }, [clientsWithLastVisit, searchTerm, filterType, showFavoritesOnly, sortField, sortDirection]);
+  }, [state.clients, searchTerm, filterType, showFavoritesOnly, sortField, sortDirection]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -127,7 +113,7 @@ export function ClientsSection({ onClientSelect }: ClientsSectionProps) {
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 mb-6">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -167,11 +153,11 @@ export function ClientsSection({ onClientSelect }: ClientsSectionProps) {
         {/* Fixed Table Header */}
         <div className="px-8">
           <div className="bg-white rounded-t-lg shadow">
-            <table className="w-full">
+            <table className="w-full table-fixed">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="w-10 px-6 py-3"></th>
-                  <th className="px-6 py-3 text-left">
+                  <th className="w-[60px] px-6 py-3"></th>
+                  <th className="w-[30%] px-6 py-3 text-left">
                     <button
                       className="flex items-center text-xs font-medium text-gray-500 uppercase hover:text-gray-700"
                       onClick={() => handleSort('name')}
@@ -182,7 +168,7 @@ export function ClientsSection({ onClientSelect }: ClientsSectionProps) {
                       )}
                     </button>
                   </th>
-                  <th className="px-6 py-3 text-left">
+                  <th className="w-[20%] px-6 py-3 text-left">
                     <button
                       className="flex items-center text-xs font-medium text-gray-500 uppercase hover:text-gray-700"
                       onClick={() => handleSort('type')}
@@ -193,7 +179,7 @@ export function ClientsSection({ onClientSelect }: ClientsSectionProps) {
                       )}
                     </button>
                   </th>
-                  <th className="px-6 py-3 text-left">
+                  <th className="w-[30%] px-6 py-3 text-left">
                     <button
                       className="flex items-center text-xs font-medium text-gray-500 uppercase hover:text-gray-700"
                       onClick={() => handleSort('lastVisit')}
@@ -204,7 +190,7 @@ export function ClientsSection({ onClientSelect }: ClientsSectionProps) {
                       )}
                     </button>
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  <th className="w-[20%] px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                     Actions
                   </th>
                 </tr>
@@ -219,11 +205,11 @@ export function ClientsSection({ onClientSelect }: ClientsSectionProps) {
         <div className="px-8">
           <div className="bg-white rounded-b-lg shadow">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <tbody className="bg-white divide-y divide-gray-200">
                   {sortedAndFilteredClients.map((client) => (
                     <tr key={client.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
+                      <td className="w-[60px] px-6 py-4">
                         <button
                           onClick={() => toggleFavorite(client.id)}
                           className={`text-gray-400 hover:text-yellow-400 ${
@@ -237,7 +223,7 @@ export function ClientsSection({ onClientSelect }: ClientsSectionProps) {
                           />
                         </button>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="w-[30%] px-6 py-4">
                         <button
                           onClick={() => onClientSelect(client)}
                           className="text-blue-900 hover:text-blue-700 font-medium"
@@ -245,15 +231,15 @@ export function ClientsSection({ onClientSelect }: ClientsSectionProps) {
                           {client.name}
                         </button>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="w-[20%] px-6 py-4">
                         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                           {clientTypes.find(t => t.value === client.type)?.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="w-[30%] px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(client.lastVisit)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="w-[20%] px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <button
                             onClick={() => onClientSelect(client)}
